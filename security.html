@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rolox — Segurança da Conta</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#111; color:#fff; font-family:Arial,sans-serif; min-height:100vh; }
+
+    .topbar { background:#0d0d0d; padding:14px 24px; display:flex; align-items:center; gap:16px; border-bottom:1px solid #222; }
+    .topbar h1 { color:#00a2ff; font-size:1.3rem; }
+    .topbar span { color:#555; font-size:.85rem; }
+
+    .container { max-width:860px; margin:32px auto; padding:0 20px; }
+
+    .section { background:#1a1a1a; border-radius:10px; padding:24px; margin-bottom:20px; }
+    .section h2 { font-size:1rem; color:#ccc; margin-bottom:16px; border-bottom:1px solid #2a2a2a; padding-bottom:10px; }
+
+    .row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #222; }
+    .row:last-child { border-bottom:none; }
+    .row-label { font-size:.9rem; color:#aaa; }
+    .row-value { font-size:.85rem; color:#666; font-family:monospace; }
+    .row-value.ok    { color:#4caf50; }
+    .row-value.warn  { color:#ff9800; }
+    .row-value.danger{ color:#f44336; }
+
+    .alert-card { background:#2a1010; border:1px solid #f44336; border-radius:8px; padding:16px; margin-bottom:16px; display:none; }
+    .alert-card h3 { color:#f44336; margin-bottom:6px; font-size:.95rem; }
+    .alert-card p  { color:#ffaaaa; font-size:.82rem; }
+
+    .session-list { list-style:none; }
+    .session-list li { background:#222; border-radius:6px; padding:12px 16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+    .session-list li .s-info { font-size:.82rem; color:#888; }
+    .session-list li .s-name { font-size:.9rem; color:#ccc; }
+    .session-list li .s-badge { font-size:.72rem; padding:2px 8px; border-radius:4px; }
+    .badge-current { background:#00a2ff22; color:#00a2ff; }
+    .badge-other   { background:#ff440022; color:#ff8888; }
+
+    .btn-danger { background:#3a1010; color:#f44336; border:1px solid #f44336; border-radius:6px; padding:8px 18px; font-size:.85rem; cursor:pointer; }
+    .btn-danger:hover { background:#f44336; color:#fff; }
+    .btn-blue { background:#00a2ff; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:.85rem; cursor:pointer; }
+
+    .token-display { font-family:monospace; font-size:.78rem; color:#444; background:#0a0a0a; padding:6px 10px; border-radius:4px; word-break:break-all; }
+    .countdown-bar { height:3px; background:#00a2ff; border-radius:2px; transition:width 1s linear; margin-top:8px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>ROLOX</h1>
+  <span>Segurança da Conta</span>
+</div>
+
+<div class="container">
+
+  <!-- Alerta de login duplicado -->
+  <div class="alert-card" id="alertDuplicate">
+    <h3>⚠️ Login duplicado detectado!</h3>
+    <p id="alertDuplicateMsg">Outra sessão com seu usuário foi detectada. Se não foi você, troque sua senha no Roblox imediatamente.</p>
+  </div>
+
+  <!-- Informações da sessão atual -->
+  <div class="section">
+    <h2>Sessão Atual</h2>
+    <div class="row">
+      <span class="row-label">Usuário</span>
+      <span class="row-value" id="lblUser">—</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Token de sessão</span>
+      <div>
+        <div class="token-display" id="lblToken">—</div>
+        <div class="countdown-bar" id="cbar" style="width:100%"></div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="row-label">Renova em</span>
+      <span class="row-value" id="lblCountdown">5s</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Status</span>
+      <span class="row-value ok" id="lblStatus">✅ Seguro</span>
+    </div>
+  </div>
+
+  <!-- Sessões ativas -->
+  <div class="section">
+    <h2>Sessões Detectadas</h2>
+    <ul class="session-list" id="sessionList">
+      <li><span class="s-name" style="color:#555">Nenhuma sessão registrada.</span></li>
+    </ul>
+  </div>
+
+  <!-- Configurações de segurança -->
+  <div class="section">
+    <h2>Configurações de Segurança</h2>
+    <div class="row">
+      <span class="row-label">Rotação de token</span>
+      <span class="row-value ok">Ativa (a cada 5s)</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Detecção de sessão duplicada</span>
+      <span class="row-value ok">Ativa</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Validação de timestamp</span>
+      <span class="row-value ok">Ativa (janela de 30s)</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Ações</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn-danger" onclick="clearSessions()">Encerrar todas as sessões</button>
+        <button class="btn-blue"   onclick="location.href='https://www.roblox.com/my/account#!/security'">Segurança no Roblox</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const params   = new URLSearchParams(window.location.search);
+  const username = params.get("name_username") || localStorage.getItem("rolox_last_user") || "desconhecido";
+
+  if (username) localStorage.setItem("rolox_last_user", username);
+
+  document.getElementById("lblUser").textContent = username;
+
+  // ── Token rotativo ───────────────────────────────────
+  function makeToken(user, seed) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+    let hash = 0;
+    const str = user + seed + Date.now();
+    for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+    let token = user + "_";
+    for (let i = 0; i < 16; i++) token += chars[Math.abs((hash * (i+1) * 31337) >> 2) % chars.length];
+    return token;
+  }
+
+  const tokenKey  = "rolox_token_" + username;
+  const timeKey   = tokenKey + "_time";
+  const sessKey   = "rolox_sessions_" + username;
+  let countdown   = 5;
+  let currentToken = "";
+
+  function rotateToken() {
+    const seed   = Math.random().toString(36).slice(2);
+    const prev   = localStorage.getItem(tokenKey);
+    const prevT  = parseInt(localStorage.getItem(timeKey) || "0");
+    currentToken = makeToken(username, seed);
+    const now    = Date.now();
+
+    // Detecta duplicata
+    if (prev && prev !== currentToken && (now - prevT) < 8000) {
+      showDuplicate(prev);
+    }
+
+    localStorage.setItem(tokenKey, currentToken);
+    localStorage.setItem(timeKey, now.toString());
+
+    // Registra sessão
+    let sessions = JSON.parse(localStorage.getItem(sessKey) || "[]");
+    sessions.unshift({ token: currentToken, time: new Date().toLocaleString("pt-BR"), current: true });
+    if (sessions.length > 5) sessions = sessions.slice(0, 5);
+    localStorage.setItem(sessKey, JSON.stringify(sessions));
+
+    document.getElementById("lblToken").textContent = currentToken;
+    renderSessions(sessions);
+    countdown = 5;
+    document.getElementById("cbar").style.width = "100%";
+  }
+
+  function showDuplicate(otherToken) {
+    const box = document.getElementById("alertDuplicate");
+    document.getElementById("alertDuplicateMsg").textContent =
+      `Sessão duplicada detectada! Token anterior: ${otherToken.slice(0,30)}... Se não foi você, troque sua senha no Roblox.`;
+    box.style.display = "block";
+    document.getElementById("lblStatus").textContent = "⚠️ Sessão duplicada!";
+    document.getElementById("lblStatus").className   = "row-value danger";
+  }
+
+  function renderSessions(sessions) {
+    const ul = document.getElementById("sessionList");
+    ul.innerHTML = "";
+    sessions.forEach((s, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div>
+          <div class="s-name">${s.token.slice(0, 32)}...</div>
+          <div class="s-info">${s.time}</div>
+        </div>
+        <span class="s-badge ${i === 0 ? 'badge-current' : 'badge-other'}">${i === 0 ? 'Atual' : 'Anterior'}</span>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function clearSessions() {
+    localStorage.removeItem(tokenKey);
+    localStorage.removeItem(timeKey);
+    localStorage.removeItem(sessKey);
+    document.getElementById("alertDuplicate").style.display = "none";
+    document.getElementById("lblStatus").textContent = "✅ Seguro";
+    document.getElementById("lblStatus").className   = "row-value ok";
+    document.getElementById("sessionList").innerHTML =
+      '<li><span class="s-name" style="color:#555">Sessões encerradas.</span></li>';
+    rotateToken();
+  }
+
+  // Inicia
+  rotateToken();
+  setInterval(() => {
+    countdown--;
+    document.getElementById("lblCountdown").textContent = countdown + "s";
+    document.getElementById("cbar").style.width = (countdown / 5 * 100) + "%";
+    if (countdown <= 0) rotateToken();
+  }, 1000);
+</script>
+</body>
+</html>

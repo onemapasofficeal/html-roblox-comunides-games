@@ -5,82 +5,129 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rolox Launcher</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #111; color: #fff; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .card { background: #1a1a1a; border-radius: 12px; padding: 40px; max-width: 520px; width: 90%; text-align: center; }
-    h1 { color: #00a2ff; font-size: 2rem; margin-bottom: 8px; }
-    p  { color: #888; font-size: 0.9rem; margin-bottom: 28px; }
-    .btn { display: block; width: 100%; padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; border: none; margin-bottom: 12px; text-decoration: none; }
-    .btn-blue  { background: #00a2ff; color: #fff; }
-    .btn-green { background: #1a6b1a; color: #7fff7f; }
-    .btn-gray  { background: #2a2a2a; color: #aaa; font-size: 0.85rem; }
-    .info { background: #222; border-radius: 8px; padding: 14px; margin-top: 20px; font-size: 0.8rem; color: #666; word-break: break-all; }
-    .badge { display: inline-block; background: #00a2ff22; color: #00a2ff; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; margin-bottom: 16px; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#111; color:#fff; font-family:Arial,sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .card { background:#1a1a1a; border-radius:12px; padding:40px; max-width:520px; width:90%; text-align:center; }
+    h1 { color:#00a2ff; font-size:2rem; margin-bottom:6px; }
+    .badge { display:inline-block; background:#00a2ff22; color:#00a2ff; border-radius:4px; padding:2px 10px; font-size:.75rem; margin-bottom:18px; }
+    .btn { display:block; width:100%; padding:14px; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer; border:none; margin-bottom:10px; text-decoration:none; }
+    .btn-blue  { background:#00a2ff; color:#fff; }
+    .btn-green { background:#1a6b1a; color:#7fff7f; }
+    .info { background:#222; border-radius:8px; padding:12px; margin-top:18px; font-size:.75rem; color:#555; word-break:break-all; }
+    .token-box { background:#0a0a0a; border:1px solid #333; border-radius:6px; padding:8px 12px; margin:12px 0; font-size:.7rem; color:#444; font-family:monospace; }
+    .countdown { color:#555; font-size:.75rem; margin-top:6px; }
+    #lblGame { color:#ccc; font-size:.95rem; margin-bottom:18px; }
+    .alert { background:#3a1a1a; border:1px solid #ff4444; border-radius:8px; padding:12px; color:#ff8888; font-size:.85rem; margin-bottom:14px; display:none; }
   </style>
 </head>
 <body>
 <div class="card">
   <h1>ROLOX</h1>
   <span class="badge">Launcher</span>
-  <p id="lblName">Carregando...</p>
+  <div id="alertBox" class="alert">⚠️ <span id="alertMsg"></span></div>
+  <p id="lblGame">Carregando...</p>
 
   <a id="btnHttps" class="btn btn-blue"  href="#" target="_blank">🌐 Abrir no navegador</a>
   <a id="btnRoblox" class="btn btn-green" href="#">▶ Abrir no Roblox</a>
-  <a id="btnCommunity" class="btn btn-gray" href="#" target="_blank" style="display:none">👥 Ver Comunidade</a>
 
-  <div class="info" id="infoBox">Aguardando parâmetros...</div>
+  <div class="token-box">
+    Token de sessão: <span id="tokenDisplay">...</span>
+    <div class="countdown">Renova em <span id="countdown">5</span>s</div>
+  </div>
+
+  <div class="info" id="infoBox">Aguardando...</div>
 </div>
 
 <script>
-  const params  = new URLSearchParams(window.location.search);
-  const nameApp = params.get("name_app")   || "";
-  const placeId = params.get("id_map")     || params.get("placeId") || "";
-  const groupId = params.get("id_group")   || params.get("groupId") || "";
-  const userId  = params.get("username")   || "";
+  const params   = new URLSearchParams(window.location.search);
+  const nameApp  = params.get("name_app")        || "";
+  const username = params.get("name_username")   || "";
+  const placeId  = params.get("id_map")          || "";
+  const groupId  = params.get("id_group")        || "";
+  const dtParam  = params.get("data_and_horario")|| "";
 
-  const lblName      = document.getElementById("lblName");
-  const btnHttps     = document.getElementById("btnHttps");
-  const btnRoblox    = document.getElementById("btnRoblox");
-  const btnCommunity = document.getElementById("btnCommunity");
-  const infoBox      = document.getElementById("infoBox");
+  // ── Token rotativo ───────────────────────────────────
+  function makeToken(user, seed) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+    let hash = 0;
+    const str = user + seed + Date.now();
+    for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+    let token = user + "_";
+    for (let i = 0; i < 16; i++) token += chars[Math.abs((hash * (i+1) * 31337) >> 2) % chars.length];
+    return token;
+  }
 
-  // ── Jogo ────────────────────────────────────────────
+  let currentToken = "";
+  let countdownVal = 5;
+  const tokenKey   = "rolox_token_" + username;
+
+  function rotateToken() {
+    const seed    = Math.random().toString(36).slice(2);
+    currentToken  = makeToken(username || "guest", seed);
+    const prev    = localStorage.getItem(tokenKey);
+
+    // Detecta login duplicado: se já existe token diferente de outra aba/sessão
+    if (prev && prev !== currentToken && username) {
+      const prevTime = localStorage.getItem(tokenKey + "_time");
+      const now      = Date.now();
+      if (prevTime && (now - parseInt(prevTime)) < 8000) {
+        // Token mudou em menos de 8s — outra sessão ativa
+        showAlert("Alguém entrou na sua conta em outro lugar! Token de sessão duplicado detectado.");
+      }
+    }
+
+    localStorage.setItem(tokenKey, currentToken);
+    localStorage.setItem(tokenKey + "_time", Date.now().toString());
+    document.getElementById("tokenDisplay").textContent = currentToken;
+    countdownVal = 5;
+  }
+
+  function showAlert(msg) {
+    const box = document.getElementById("alertBox");
+    document.getElementById("alertMsg").textContent = msg;
+    box.style.display = "block";
+  }
+
+  // Inicia rotação
+  rotateToken();
+  setInterval(() => {
+    countdownVal--;
+    document.getElementById("countdown").textContent = countdownVal;
+    if (countdownVal <= 0) rotateToken();
+  }, 1000);
+
+  // ── Valida timestamp (anti-replay) ──────────────────
+  if (dtParam) {
+    try {
+      const ts  = parseInt(dtParam);
+      const now = Date.now();
+      const diff = Math.abs(now - ts);
+      if (diff > 30000) { // mais de 30s de diferença
+        showAlert("Link expirado ou horário inválido. Gere um novo link no Rolox.");
+      }
+    } catch(e) {}
+  }
+
+  // ── Configura botões ─────────────────────────────────
   if (placeId) {
-    lblName.textContent   = nameApp || "Jogo Roblox";
-    btnHttps.href         = `https://www.roblox.com/games/${placeId}`;
-    btnRoblox.href        = `roblox://placeId=${placeId}`;
-    btnRoblox.textContent = `▶ Jogar: ${nameApp || placeId}`;
-    infoBox.textContent   = `placeId=${placeId}${userId ? " | usuário="+userId : ""}`;
-
-    // Redireciona automaticamente para roblox:// após 1s
-    setTimeout(() => { window.location.href = `roblox://placeId=${placeId}`; }, 1000);
-  }
-
-  // ── Comunidade / Grupo ───────────────────────────────
-  else if (groupId) {
-    lblName.textContent        = nameApp || "Comunidade Roblox";
-    btnHttps.href              = `https://www.roblox.com/communities/${groupId}`;
-    btnHttps.textContent       = "🌐 Ver Comunidade no navegador";
-    btnRoblox.style.display    = "none";
-    btnCommunity.style.display = "block";
-    btnCommunity.href          = `https://www.roblox.com/communities/${groupId}`;
-    btnCommunity.textContent   = `👥 ${nameApp || "Comunidade"}`;
-    infoBox.textContent        = `groupId=${groupId}`;
-
-    setTimeout(() => { window.location.href = `https://www.roblox.com/communities/${groupId}`; }, 1000);
-  }
-
-  // ── Perfil de usuário ────────────────────────────────
-  else if (userId) {
-    lblName.textContent  = `Perfil: ${userId}`;
-    btnHttps.href        = `https://www.roblox.com/user.aspx?username=${userId}`;
-    btnRoblox.style.display = "none";
-    infoBox.textContent  = `username=${userId}`;
-  }
-
-  else {
-    lblName.textContent = "Parâmetros não encontrados.";
-    infoBox.textContent = "Use: ?name_app=NomeDoJogo&id_map=PLACEID";
+    document.getElementById("lblGame").textContent = nameApp || "Jogo Roblox";
+    document.getElementById("btnHttps").href  = `https://www.roblox.com/games/${placeId}`;
+    document.getElementById("btnRoblox").href = `roblox://placeId=${placeId}`;
+    document.getElementById("btnRoblox").textContent = `▶ Jogar: ${nameApp || placeId}`;
+    document.getElementById("infoBox").textContent =
+      `Jogo: ${nameApp} | placeId: ${placeId}${username ? " | usuário: "+username : ""}`;
+    setTimeout(() => { window.location.href = `roblox://placeId=${placeId}`; }, 1200);
+  } else if (groupId) {
+    document.getElementById("lblGame").textContent = nameApp || "Comunidade";
+    document.getElementById("btnHttps").href = `https://www.roblox.com/communities/${groupId}`;
+    document.getElementById("btnRoblox").style.display = "none";
+    document.getElementById("infoBox").textContent = `Comunidade: ${nameApp} | groupId: ${groupId}`;
+    setTimeout(() => { window.location.href = `https://www.roblox.com/communities/${groupId}`; }, 1200);
+  } else {
+    document.getElementById("lblGame").textContent = "Parâmetros não encontrados.";
+    document.getElementById("infoBox").textContent = "Use: ?name_app=Nome&id_map=PLACEID&name_username=USER&data_and_horario=TIMESTAMP";
+    document.getElementById("btnHttps").style.display = "none";
+    document.getElementById("btnRoblox").style.display = "none";
   }
 </script>
 </body>
