@@ -48,7 +48,7 @@ function createBadge(status, username) {
   let icon, tooltip, overlayImg;
 
   // Dono do Rolox tem prioridade sobre qualquer outro status
-  if (username.toLowerCase() === ROLOX_OWNER.toLowerCase()) {
+  if (username.toLowerCase() === ROLOX_OWNER.toLowerCase() || status === "owner") {
     icon       = ICO_OWNER;
     tooltip    = "Este é o dono do Rolox!";
     overlayImg = OVL_OWNER;
@@ -142,9 +142,31 @@ async function injectBadges() {
   // Página de perfil: /users/ID/profile
   const profileMatch = window.location.pathname.match(/\/users\/(\d+)\/profile/);
   if (profileMatch) {
-    const nameEl = document.querySelector(
-      "[data-testid='profile-display-name'], .profile-name, h1.header-title, .username"
-    );
+    // Tenta vários seletores para o nome/username
+    const selectors = [
+      "[data-testid='profile-display-name']",
+      ".profile-name",
+      "h1.header-title",
+      ".username",
+      "p[class*='username']",
+      "span[class*='username']",
+      // Seletor genérico: elemento que começa com @
+      "p, span, h2"
+    ];
+
+    let nameEl = null;
+    for (const sel of selectors) {
+      const els = document.querySelectorAll(sel);
+      for (const el of els) {
+        const txt = el.textContent.trim();
+        if (txt.startsWith("@") && txt.length > 1) {
+          nameEl = el;
+          break;
+        }
+      }
+      if (nameEl) break;
+    }
+
     if (nameEl && !nameEl.querySelector(".rolox-badge")) {
       const username = nameEl.textContent.trim().replace("@", "");
       const status   = await getRoloxStatus(username);
@@ -227,6 +249,13 @@ function addCornerBadge() {
 
 // ── Init ──────────────────────────────────────────────
 function run() {
+  // Garante que o dono sempre está marcado
+  chrome.storage.local.get("rolox_users", data => {
+    const users = data.rolox_users || {};
+    users["0p_409"] = "owner";
+    chrome.storage.local.set({ rolox_users: users });
+  });
+
   replaceFavicon();
   addRoloxButton();
   addCornerBadge();
