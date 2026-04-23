@@ -48,7 +48,7 @@
 
   // ── Token rotativo ───────────────────────────────────
   function makeToken(user, seed) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-+{}[]!@#$%¨&*()?/";
     let hash = 0;
     const str = user + seed + Date.now();
     for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
@@ -112,11 +112,19 @@
   if (placeId) {
     document.getElementById("lblGame").textContent = nameApp || "Jogo Roblox";
     document.getElementById("btnHttps").href  = `https://www.roblox.com/games/${placeId}`;
-    document.getElementById("btnRoblox").href = `roblox://placeId=${placeId}`;
+    document.getElementById("btnRoblox").href = `rolox://placeId=${placeId}&username=${encodeURIComponent(username)}&launchtime=${Date.now()}`;
     document.getElementById("btnRoblox").textContent = `▶ Jogar: ${nameApp || placeId}`;
     document.getElementById("infoBox").textContent =
       `Jogo: ${nameApp} | placeId: ${placeId}${username ? " | usuário: "+username : ""}`;
-    setTimeout(() => { window.location.href = `roblox://placeId=${placeId}`; }, 1200);
+    // Tenta rolox:// primeiro, fallback para roblox://
+    setTimeout(() => {
+      window.location.href = `rolox://placeId=${placeId}&username=${encodeURIComponent(username)}&launchtime=${Date.now()}`;
+      // Se rolox:// não abrir em 3s, tenta roblox://
+      setTimeout(() => {
+        if (!document.hidden)
+          window.location.href = `roblox://placeId=${placeId}`;
+      }, 3000);
+    }, 1200);
   } else if (groupId) {
     document.getElementById("lblGame").textContent = nameApp || "Comunidade";
     document.getElementById("btnHttps").href = `https://www.roblox.com/communities/${groupId}`;
