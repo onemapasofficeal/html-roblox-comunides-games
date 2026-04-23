@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{width:290px;background:#111;color:#fff;font-family:Arial,sans-serif}
+    .header{background:#0d0d0d;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #222}
+    .header img{width:26px;height:26px;border-radius:4px}
+    .header h1{font-size:.95rem;color:#00a2ff;flex:1}
+    .header span{font-size:.7rem;color:#444}
+    #userInfo{padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1a1a1a}
+    #userInfo img{width:30px;height:30px;border-radius:50%;background:#333}
+    #userName{font-size:.85rem;font-weight:bold}
+    #userId{font-size:.7rem;color:#555}
+    .section{padding:8px 14px;border-bottom:1px solid #1a1a1a}
+    .section-title{font-size:.68rem;color:#444;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+    .btn{display:flex;align-items:center;gap:7px;width:100%;padding:7px 9px;background:#1a1a1a;border:none;color:#ccc;font-size:.82rem;cursor:pointer;border-radius:5px;margin-bottom:3px;text-decoration:none}
+    .btn:hover{background:#222;color:#fff}
+    .btn img{width:16px;height:16px;border-radius:2px}
+    .badge{background:#00a2ff22;color:#00a2ff;border-radius:3px;padding:1px 5px;font-size:.68rem;margin-left:auto}
+
+    /* Painel marcar usuário */
+    #markPanel{display:none;padding:8px 0 4px}
+    #markPanel input{width:100%;padding:6px 8px;background:#222;border:1px solid #333;border-radius:4px;color:#fff;font-size:.82rem;margin-bottom:6px;outline:none}
+    .mark-btns{display:flex;gap:4px}
+    .mark-btns button{flex:1;padding:5px 0;border:none;border-radius:4px;font-size:.75rem;font-weight:bold;cursor:pointer}
+    #btnMarkUses  {background:#00a2ff22;color:#00a2ff}
+    #btnMarkBanned{background:#f4433622;color:#f44336}
+    #btnMarkNone  {background:#33333388;color:#888}
+
+    /* Status icons legend */
+    .legend{padding:6px 14px;border-bottom:1px solid #1a1a1a}
+    .legend-title{font-size:.68rem;color:#444;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+    .legend-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;font-size:.75rem;color:#888}
+    .legend-row img{width:16px;height:16px;border-radius:2px}
+
+    .status{padding:6px 14px;font-size:.72rem;color:#444;text-align:center}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <img src="icons/roblox-rolox.png" alt="Rolox"/>
+  <h1>ROLOX</h1>
+  <span id="version">v1.0.0</span>
+</div>
+
+<div id="userInfo">
+  <img id="avatarImg" src="icons/roblox-rolox.png"/>
+  <div>
+    <div id="userName">Carregando...</div>
+    <div id="userId"></div>
+  </div>
+</div>
+
+<!-- Legenda dos ícones -->
+<div class="legend">
+  <div class="legend-title">Ícones de status</div>
+  <div class="legend-row"><img src="icons/roblox-rolox.png"/> Usa Rolox</div>
+  <div class="legend-row"><img src="icons/ROLOX-x.png"/>      Banido do Rolox</div>
+  <div class="legend-row"><img src="icons/rolox-n.png"/>      Não usa Rolox</div>
+  <div class="legend-row"><img src="icons/ROBLOX-ROLOX_dono.png"/> Dono do Rolox</div>
+</div>
+
+<div class="section">
+  <div class="section-title">Navegação rápida</div>
+  <a class="btn" id="btnHome" href="#" target="_blank">
+    <img src="icons/roblox-rolox.png"/> Abrir Rolox Web
+  </a>
+  <a class="btn" href="https://www.roblox.com" target="_blank">
+    🌐 Roblox.com
+  </a>
+  <a class="btn" href="https://www.roblox.com/my/messages" target="_blank">
+    💬 Mensagens
+  </a>
+  <a class="btn" href="https://www.roblox.com/catalog" target="_blank">
+    🛍 Mercado
+  </a>
+</div>
+
+<div class="section">
+  <div class="section-title">Marcar usuário</div>
+  <button class="btn" id="btnMarkUser">
+    <img src="icons/roblox-rolox.png"/> Marcar status de usuário
+    <span class="badge">Manual</span>
+  </button>
+  <div id="markPanel">
+    <input id="txtMarkUser" placeholder="Username do Roblox..."/>
+    <div class="mark-btns">
+      <button id="btnMarkUses">✅ Usa Rolox</button>
+      <button id="btnMarkBanned">❌ Banido</button>
+      <button id="btnMarkNone">— Não usa</button>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Extensão</div>
+  <button class="btn" id="btnReplace">
+    🔄 Substituir ícones agora
+  </button>
+  <button class="btn" id="btnToggle">
+    ✅ Extensão ativa
+  </button>
+</div>
+
+<div class="status" id="status">Rolox Extension v1.0.0 — One Mapas Official</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

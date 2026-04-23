@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Rolox",
+  "version": "1.0.0",
+  "description": "Cliente alternativo Rolox — substitui o ícone do Roblox pelo Rolox e adiciona acesso rápido.",
+  "icons": {
+    "16":  "icons/roblox-rolox.png",
+    "48":  "icons/roblox-rolox@3.png",
+    "128": "icons/roblox-rolox@3.png"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.roblox.com/*",
+    "https://*.roblox.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.roblox.com/*", "https://*.roblox.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16":  "icons/roblox-rolox.png",
+      "48":  "icons/roblox-rolox@3.png",
+      "128": "icons/roblox-rolox@3.png"
+    },
+    "default_title": "Rolox"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
