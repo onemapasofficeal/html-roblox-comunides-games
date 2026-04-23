@@ -15,7 +15,8 @@ const OVL_NO_ROLOX    = EXT("icons/roblox-rolox@4.png"); // overlay "não usa"
 const OVL_OWNER       = EXT("icons/ROBLOX-ROLOX_dono@2.png"); // overlay "dono"
 
 // Username do dono do Rolox
-const ROLOX_OWNER = "0p_409";
+const ROLOX_OWNER    = "0p_409";
+const ROLOX_OWNER_ID = "8444264251"; // ID do perfil do dono
 
 // ── Storage: usuários Rolox conhecidos ───────────────
 // Formato: { username: "uses"|"banned"|"none" }
@@ -139,57 +140,57 @@ function showOverlay(imgSrc, username, status, x, y) {
 
 // ── Injeta badges nos perfis de usuário ──────────────
 async function injectBadges() {
-  // Página de perfil: /users/ID/profile
   const profileMatch = window.location.pathname.match(/\/users\/(\d+)\/profile/);
-  if (profileMatch) {
-    // Tenta vários seletores para o nome/username
-    const selectors = [
-      "[data-testid='profile-display-name']",
-      ".profile-name",
-      "h1.header-title",
-      ".username",
-      "p[class*='username']",
-      "span[class*='username']",
-      // Seletor genérico: elemento que começa com @
-      "p, span, h2"
-    ];
+  if (!profileMatch) return;
 
-    let nameEl = null;
-    for (const sel of selectors) {
-      const els = document.querySelectorAll(sel);
-      for (const el of els) {
-        const txt = el.textContent.trim();
-        if (txt.startsWith("@") && txt.length > 1) {
-          nameEl = el;
-          break;
-        }
+  const pageUserId = profileMatch[1];
+
+  // ── Perfil do dono do Rolox ───────────────────────
+  if (pageUserId === ROLOX_OWNER_ID) {
+    if (document.getElementById("rolox-owner-badge")) return;
+
+    // Encontra o elemento com @0p_409 ou qualquer @ na página
+    const allEls = document.querySelectorAll("p, span, h2, h3, div");
+    let target = null;
+    for (const el of allEls) {
+      const txt = el.textContent.trim();
+      if (txt.startsWith("@") && txt.length < 40 && el.children.length === 0) {
+        target = el;
+        break;
       }
-      if (nameEl) break;
     }
 
-    if (nameEl && !nameEl.querySelector(".rolox-badge")) {
-      const username = nameEl.textContent.trim().replace("@", "");
-      const status   = await getRoloxStatus(username);
-      const badge    = createBadge(status, username);
-      nameEl.appendChild(badge);
+    const badge = document.createElement("span");
+    badge.id = "rolox-owner-badge";
+    badge.style.cssText = "display:inline-block;margin-left:6px;vertical-align:middle;cursor:pointer;";
+    badge.innerHTML = `<img src="${ICO_OWNER}" title="Dono do Rolox" style="width:20px;height:20px;border-radius:4px;"/>`;
+    badge.onclick = (e) => {
+      e.stopPropagation();
+      showOverlay(OVL_OWNER, ROLOX_OWNER, "owner", e.clientX, e.clientY);
+    };
+
+    if (target) {
+      target.appendChild(badge);
+    } else {
+      // Fallback: coloca logo abaixo do avatar
+      const header = document.querySelector("h1, [class*='display-name'], [class*='DisplayName']");
+      if (header) header.appendChild(badge);
     }
     return;
   }
 
-  // Listas de usuários (amigos, grupos, etc.)
-  const userCards = document.querySelectorAll(
-    "[data-testid='friend-card'], .friend-card, .user-card, [class*='UserCard'], [class*='friend']"
-  );
-
-  for (const card of userCards) {
-    if (card.querySelector(".rolox-badge")) continue;
-    const nameEl = card.querySelector("[class*='name'], [class*='Name'], span, p");
-    if (!nameEl) continue;
-    const username = nameEl.textContent.trim().replace("@", "");
-    if (!username || username.length < 3) continue;
-    const status = await getRoloxStatus(username);
-    const badge  = createBadge(status, username);
-    nameEl.appendChild(badge);
+  // ── Outros perfis ─────────────────────────────────
+  const allEls = document.querySelectorAll("p, span, h2, h3");
+  for (const el of allEls) {
+    const txt = el.textContent.trim();
+    if (txt.startsWith("@") && txt.length < 40 && el.children.length === 0 && !el.querySelector(".rolox-badge")) {
+      const username = txt.replace("@", "").trim();
+      if (!username) continue;
+      const status = await getRoloxStatus(username);
+      const badge  = createBadge(status, username);
+      el.appendChild(badge);
+      break;
+    }
   }
 }
 
@@ -270,3 +271,8 @@ const observer = new MutationObserver(() => {
   injectBadges();
 });
 observer.observe(document.body, { childList: true, subtree: true });
+
+// Tentativas extras com delay para SPAs lentas
+setTimeout(injectBadges, 1500);
+setTimeout(injectBadges, 3000);
+setTimeout(injectBadges, 5000);
