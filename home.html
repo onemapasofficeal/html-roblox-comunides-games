@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Rolox - Início</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#171717;color:#fff;font-family:Arial,sans-serif;min-height:100vh}
+
+    /* Nav */
+    nav{background:#0d0d0d;padding:0 24px;height:52px;display:flex;align-items:center;gap:0;position:fixed;top:0;left:0;right:0;z-index:99;border-bottom:1px solid #222}
+    .brand{color:#00a2ff;font-weight:bold;font-size:1.3rem;text-decoration:none;margin-right:24px}
+    .nav-links{display:flex;gap:4px;flex:1}
+    .nav-links a{color:#888;font-size:.9rem;text-decoration:none;padding:6px 12px;border-radius:6px}
+    .nav-links a:hover,.nav-links a.active{color:#fff;background:#1e1e1e}
+    .nav-right{display:flex;align-items:center;gap:12px}
+    .avatar-box{width:30px;height:30px;border-radius:50%;background:#333;overflow:hidden}
+    .avatar-box img{width:100%;height:100%;object-fit:cover}
+    .username{font-size:.9rem;color:#ccc}
+    .btn-sm{padding:6px 14px;border-radius:6px;font-size:.85rem;font-weight:bold;cursor:pointer;border:none}
+    .btn-blue{background:#00a2ff;color:#fff}
+    .btn-out{background:#252525;color:#888;border:1px solid #333}
+
+    /* Layout */
+    .main{margin-top:52px;display:flex}
+    .sidebar{width:52px;background:#0d0d0d;min-height:calc(100vh - 52px);position:fixed;top:52px;left:0;display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:4px;border-right:1px solid #1a1a1a}
+    .sb-btn{width:44px;height:44px;border-radius:8px;background:transparent;border:none;color:#888;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .sb-btn:hover,.sb-btn.active{background:#1e1e1e;color:#fff}
+    .content{margin-left:52px;padding:24px;flex:1;max-width:1200px}
+
+    /* Sections */
+    .section-title{font-size:1rem;font-weight:bold;color:#ccc;margin-bottom:12px;margin-top:24px}
+    .section-title:first-child{margin-top:0}
+
+    /* Games row */
+    .games-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
+    .games-row::-webkit-scrollbar{height:4px}
+    .games-row::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+    .game-card{min-width:180px;background:#222;border-radius:8px;overflow:hidden;cursor:pointer;flex-shrink:0;transition:transform .15s}
+    .game-card:hover{transform:scale(1.03)}
+    .game-thumb{width:180px;height:100px;background:#2a2a2a;object-fit:cover}
+    .game-info{padding:8px}
+    .game-name{font-size:.82rem;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .game-players{font-size:.72rem;color:#666;margin-top:2px}
+
+    /* Friends */
+    .friends-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
+    .friend-card{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;min-width:64px}
+    .friend-avatar{width:48px;height:48px;border-radius:50%;background:#333;overflow:hidden}
+    .friend-avatar img{width:100%;height:100%;object-fit:cover}
+    .friend-name{font-size:.7rem;color:#aaa;text-align:center;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* Search */
+    .search-box{background:#262626;border:1px solid #333;border-radius:6px;padding:8px 14px;display:flex;align-items:center;gap:8px;max-width:320px}
+    .search-box input{background:transparent;border:none;color:#fff;font-size:.9rem;outline:none;flex:1}
+
+    /* Loading */
+    .loading{color:#444;font-size:.85rem;padding:20px 0}
+
+    /* Top bar inside content */
+    .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .page-title{font-size:1.2rem;font-weight:bold}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="brand" href="home.html">ROLOX</a>
+  <div class="nav-links">
+    <a href="home.html" class="active">Início</a>
+    <a href="home.html#destaques">Destaques</a>
+    <a href="home.html#turma">Turma</a>
+    <a href="home.html#mais">Mais</a>
+  </div>
+  <div class="nav-right">
+    <div class="search-box">
+      <span>🔍</span>
+      <input id="txtSearch" placeholder="Buscar jogos..." onkeydown="if(event.key==='Enter')searchGames()"/>
+    </div>
+    <div class="avatar-box"><img id="navAvatar" src="" onerror="this.style.display='none'"/></div>
+    <span class="username" id="navUser">...</span>
+    <button class="btn-sm btn-out" onclick="logout()">Sair</button>
+  </div>
+</nav>
+
+<div class="main">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <button class="sb-btn active" title="Início" onclick="showSection('home')">⌂</button>
+    <button class="sb-btn" title="Destaques" onclick="showSection('destaques')">▦</button>
+    <button class="sb-btn" title="Avatar" onclick="showSection('avatar')">☺</button>
+    <button class="sb-btn" title="Turma" onclick="showSection('turma')">⚇</button>
+    <button class="sb-btn" title="Mais" onclick="showSection('mais')">…</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="content">
+
+    <!-- HOME -->
+    <div id="sec-home">
+      <div class="top-bar">
+        <span class="page-title">Início</span>
+      </div>
+
+      <div class="section-title">Amizades</div>
+      <div class="friends-row" id="friendsRow">
+        <div class="loading">Carregando amigos...</div>
+      </div>
+
+      <div class="section-title">Recomendações para você</div>
+      <div class="games-row" id="gamesRec">
+        <div class="loading">Carregando jogos...</div>
+      </div>
+
+      <div class="section-title">Continuar</div>
+      <div class="games-row" id="gamesCont">
+        <div class="loading">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- DESTAQUES -->
+    <div id="sec-destaques" style="display:none">
+      <div class="top-bar"><span class="page-title">Destaques</span></div>
+      <div class="section-title">Em destaque</div>
+      <div class="games-row" id="gamesDest"><div class="loading">Carregando...</div></div>
+      <div class="section-title">Revelações</div>
+      <div class="games-row" id="gamesRev"><div class="loading">Carregando...</div></div>
+      <div class="section-title">Mais jogadas agora</div>
+      <div class="games-row" id="gamesMJ"><div class="loading">Carregando...</div></div>
+    </div>
+
+    <!-- AVATAR -->
+    <div id="sec-avatar" style="display:none">
+      <div class="top-bar"><span class="page-title">Avatar</span></div>
+      <div style="text-align:center;padding:40px">
+        <img id="bigAvatar" src="" style="width:120px;height:120px;border-radius:50%;background:#333;margin-bottom:16px"/>
+        <div style="font-size:1.3rem;font-weight:bold" id="profName">...</div>
+        <div style="color:#666;margin-top:4px" id="profUser">...</div>
+        <div style="margin-top:16px">
+          <a href="#" onclick="openRoblox('profile')" style="color:#00a2ff;font-size:.9rem">Ver perfil no Roblox →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- TURMA -->
+    <div id="sec-turma" style="display:none">
+      <div class="top-bar"><span class="page-title">Turma</span></div>
+      <div style="background:#1e1e1e;border-radius:8px;padding:14px;margin-bottom:16px;color:#aaa;font-size:.88rem">
+        💬 Vamos conferir sua idade para você poder usar o chat.
+      </div>
+      <div class="section-title">Amigos</div>
+      <div id="turmaList"><div class="loading">Carregando...</div></div>
+    </div>
+
+    <!-- MAIS -->
+    <div id="sec-mais" style="display:none">
+      <div class="top-bar"><span class="page-title">Mais</span></div>
+      <div id="maisGrid" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── Auth check ───────────────────────────────────────
+  const username    = localStorage.getItem("rolox_username");
+  const displayName = localStorage.getItem("rolox_displayname") || username;
+  const userId      = localStorage.getItem("rolox_id");
+
+  if (!username) { location.href = "login.html"; }
+
+  document.getElementById("navUser").textContent = displayName || "...";
+
+  // Avatar
+  if (userId && parseInt(userId) > 0) {
+    fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png`)
+      .then(r=>r.json()).then(j=>{
+        const url = j.data?.[0]?.imageUrl;
+        if (url) {
+          document.getElementById("navAvatar").src = url;
+          document.getElementById("bigAvatar").src = url;
+        }
+      }).catch(()=>{});
+  }
+  document.getElementById("profName").textContent = displayName || "...";
+  document.getElementById("profUser").textContent = "@" + (username || "");
+
+  // ── Sections ─────────────────────────────────────────
+  const sections = ["home","destaques","avatar","turma","mais"];
+  function showSection(name) {
+    sections.forEach(s => {
+      document.getElementById("sec-"+s).style.display = s===name ? "" : "none";
+    });
+    document.querySelectorAll(".sb-btn").forEach((b,i) => {
+      b.classList.toggle("active", sections[i]===name);
+    });
+    if (name==="destaques" && !window._destLoaded) { loadDestaques(); window._destLoaded=true; }
+    if (name==="turma"     && !window._turmaLoaded){ loadTurma();     window._turmaLoaded=true; }
+    if (name==="mais")     buildMais();
+  }
+
+  // ── Games — busca direto da API do Roblox ─────────────
+  async function loadGames() {
+    let games = [];
+
+    // Tenta explore-api (jogos reais e dinâmicos)
+    for (let sortIndex = 0; sortIndex <= 4 && games.length === 0; sortIndex++) {
+      try {
+        const r = await fetch("https://apis.roblox.com/explore-api/v1/get-sorts?sessionId=rolox");
+        if (r.ok) {
+          const j = await r.json();
+          const arr = j.sorts?.[sortIndex]?.games;
+          if (arr && arr.length > 0)
+            games = arr.map(g=>({PlaceId:g.placeId,UniverseId:g.universeId,Name:g.name,Players:g.playerCount||0}));
+        }
+      } catch {}
+    }
+
+    if (games.length === 0) {
+      // Fallback: busca jogos populares via games API pública
+      try {
+        const r = await fetch("https://games.roblox.com/v1/games/list?sortToken=&gameFilter=default&startRows=0&maxRows=20");
+        if (r.ok) {
+          const j = await r.json();
+          games = (j.games||[]).map(g=>({
+            PlaceId:    g.placeId,
+            UniverseId: g.universeId,
+            Name:       g.name,
+            Players:    g.playerCount||0
+          }));
+        }
+      } catch {}
+    }
+
+    if (games.length === 0) {
+      document.querySelectorAll(".games-row").forEach(el => {
+        el.innerHTML = '<div class="loading">Não foi possível carregar jogos. Verifique sua conexão.</div>';
+      });
+      return [];
+    }
+
+    // Thumbnails em batch
+    try {
+      const ids = games.map(g=>g.UniverseId).join(",");
+      const tr  = await fetch(`https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${ids}&size=768x432&format=Png&isCircular=false`);
+      if (tr.ok) {
+        const tj = await tr.json();
+        tj.data?.forEach(item => {
+          const g = games.find(x=>x.UniverseId===item.universeId);
+          if (g) g.Thumb = item.thumbnails?.[0]?.imageUrl || "";
+        });
+      }
+    } catch {}
+
+    return games;
+  }
+
+  function renderGames(games, containerId) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = "";
+    games.forEach(g => {
+      const card = document.createElement("div");
+      card.className = "game-card";
+      card.innerHTML = `
+        <img class="game-thumb" src="${g.Thumb||''}" onerror="this.style.background='#2a2a2a'" loading="lazy"/>
+        <div class="game-info">
+          <div class="game-name">${g.Name}</div>
+          <div class="game-players">👥 ${(g.Players||0).toLocaleString()}</div>
+        </div>`;
+      card.onclick = () => openGame(g.PlaceId, g.Name);
+      el.appendChild(card);
+    });
+  }
+
+  function openGame(placeId, name) {
+    const ts   = Date.now();
+    const user = encodeURIComponent(username || "");
+    const nm   = encodeURIComponent(name);
+    location.href = `index.html?name_app=${nm}&id_map=${placeId}&name_username=${user}&data_and_horario=${ts}`;
+  }
+
+  function openRoblox(page) {
+    const urls = { profile: `https://www.roblox.com/users/${userId}/profile` };
+    window.open(urls[page] || "https://www.roblox.com", "_blank");
+  }
+
+  // ── Friends ───────────────────────────────────────────
+  async function loadFriends() {
+    const row = document.getElementById("friendsRow");
+    if (!userId || parseInt(userId) < 0) { row.innerHTML = '<div class="loading">Sem amigos (conta guest).</div>'; return; }
+    try {
+      const r = await fetch(`https://friends.roblox.com/v1/users/${userId}/friends`);
+      const j = await r.json();
+      row.innerHTML = "";
+      // Botão adicionar
+      const add = document.createElement("div");
+      add.className = "friend-card";
+      add.innerHTML = `<div class="friend-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#555">+</div><div class="friend-name">Adicionar</div>`;
+      row.appendChild(add);
+      (j.data||[]).slice(0,20).forEach(f => {
+        const c = document.createElement("div");
+        c.className = "friend-card";
+        c.innerHTML = `<div class="friend-avatar"><img src="" onerror="this.style.display='none'" loading="lazy"/></div><div class="friend-name">${f.displayName||f.name}</div>`;
+        // Avatar
+        fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${f.id}&size=150x150&format=Png`)
+          .then(r=>r.json()).then(j=>{ const img=c.querySelector("img"); if(img) img.src=j.data?.[0]?.imageUrl||""; }).catch(()=>{});
+        row.appendChild(c);
+      });
+    } catch { row.innerHTML = '<div class="loading">Não foi possível carregar amigos.</div>'; }
+  }
+
+  async function loadTurma() {
+    const list = document.getElementById("turmaList");
+    if (!userId || parseInt(userId) < 0) { list.innerHTML = '<div class="loading">Sem amigos (conta guest).</div>'; return; }
+    try {
+      const r = await fetch(`https://friends.roblox.com/v1/users/${userId}/friends`);
+      const j = await r.json();
+      list.innerHTML = "";
+      (j.data||[]).forEach(f => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #222;cursor:pointer";
+        row.innerHTML = `<div style="width:36px;height:36px;border-radius:50%;background:#333;overflow:hidden"><img src="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/></div><div><div style="font-weight:bold;font-size:.9rem">${f.displayName||f.name}</div><div style="color:#555;font-size:.78rem">@${f.name}</div></div>`;
+        fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${f.id}&size=150x150&format=Png`)
+          .then(r=>r.json()).then(j=>{ const img=row.querySelector("img"); if(img) img.src=j.data?.[0]?.imageUrl||""; }).catch(()=>{});
+        list.appendChild(row);
+      });
+      if (!j.data?.length) list.innerHTML = '<div class="loading">Nenhum amigo encontrado.</div>';
+    } catch { list.innerHTML = '<div class="loading">Erro ao carregar.</div>'; }
+  }
+
+  async function loadDestaques() {
+    const games = await loadGames();
+    const half  = Math.ceil(games.length/2);
+    renderGames(games, "gamesDest");
+    renderGames(games.slice(0,half), "gamesRev");
+    renderGames(games, "gamesMJ");
+  }
+
+  function buildMais() {
+    const grid = document.getElementById("maisGrid");
+    if (grid.children.length > 0) return;
+    const items = [
+      ["🛍","Mercado",`https://www.roblox.com/catalog`],
+      ["💎","Premium",`https://www.roblox.com/premium/membership`],
+      ["👤","Perfil",`https://www.roblox.com/users/${userId}/profile`],
+      ["👥","Amizades",`https://www.roblox.com/users/friends`],
+      ["🏘","Comunidades",`https://www.roblox.com/communities`],
+      ["🎒","Inventário",`https://www.roblox.com/users/inventory`],
+      ["💬","Mensagens",`https://www.roblox.com/my/messages`],
+      ["🔨","Criar",`https://create.roblox.com`],
+      ["🔒","Segurança",`security.html?name_username=${encodeURIComponent(username||"")}`],
+      ["⚙","Configurações",`#`],
+    ];
+    items.forEach(([icon,label,url]) => {
+      const c = document.createElement("div");
+      c.style.cssText = "width:140px;background:#222;border-radius:8px;padding:16px 8px;text-align:center;cursor:pointer";
+      c.innerHTML = `<div style="font-size:1.8rem;margin-bottom:8px">${icon}</div><div style="font-size:.82rem;color:#ccc">${label}</div>`;
+      c.onclick = () => { if(url==="#") return; if(url.startsWith("http")) window.open(url,"_blank"); else location.href=url; };
+      grid.appendChild(c);
+    });
+  }
+
+  function searchGames() {
+    const q = document.getElementById("txtSearch").value.trim().toLowerCase();
+    if (!q) return;
+    showSection("home");
+    const rec = document.getElementById("gamesRec");
+    Array.from(rec.children).forEach(c => {
+      const name = c.querySelector(".game-name")?.textContent.toLowerCase()||"";
+      c.style.display = name.includes(q) ? "" : "none";
+    });
+  }
+
+  function logout() {
+    localStorage.removeItem("rolox_username");
+    localStorage.removeItem("rolox_displayname");
+    localStorage.removeItem("rolox_id");
+    location.href = "login.html";
+  }
+
+  // ── Init ──────────────────────────────────────────────
+  (async () => {
+    const games = await loadGames();
+    renderGames(games, "gamesRec");
+    renderGames(games.slice(Math.floor(games.length/2)), "gamesCont");
+    await loadFriends();
+  })();
+</script>
+</body>
+</html>

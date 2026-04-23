@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Rolox - Criar Conta</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#111;color:#fff;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .card{background:#1a1a1a;border-radius:12px;padding:40px;max-width:460px;width:90%;text-align:center}
+    h1{color:#00a2ff;font-size:1.8rem;margin-bottom:4px}
+    .sub{color:#555;font-size:.78rem;margin-bottom:24px}
+    label{display:block;text-align:left;color:#aaa;font-size:.85rem;margin-bottom:4px}
+    input{width:100%;padding:12px;background:#262626;border:1px solid #333;border-radius:6px;color:#fff;font-size:1rem;margin-bottom:4px;outline:none}
+    input:focus{border-color:#00a2ff}
+    .field{margin-bottom:14px}
+    .hint{text-align:left;font-size:.75rem;color:#555;margin-bottom:4px}
+    .status{min-height:20px;font-size:.82rem;margin:6px 0 10px;text-align:center}
+    .status.ok{color:#4caf50} .status.err{color:#f44} .status.info{color:#64b5f6}
+    .strength-bar{height:5px;border-radius:3px;background:#333;margin-bottom:12px;overflow:hidden}
+    .strength-fill{height:100%;width:0;transition:width .3s,background .3s;border-radius:3px}
+    .btn{width:100%;padding:14px;border-radius:8px;font-size:1rem;font-weight:bold;cursor:pointer;border:none;margin-bottom:10px}
+    .btn-blue{background:#00a2ff;color:#fff} .btn-blue:disabled{background:#1a4a6a;cursor:not-allowed}
+    .btn-gray{background:#252525;color:#aaa;border:1px solid #333}
+    .sep{color:#444;font-size:.8rem;margin:8px 0}
+    .link{color:#00a2ff;font-size:.85rem;cursor:pointer;text-decoration:none}
+    nav{background:#0d0d0d;padding:12px 24px;display:flex;gap:20px;align-items:center;position:fixed;top:0;left:0;right:0;z-index:99}
+    nav .brand{color:#00a2ff;font-weight:bold;font-size:1.2rem;text-decoration:none}
+    nav a{color:#888;font-size:.9rem;text-decoration:none} nav a:hover{color:#fff}
+    .wrap{margin-top:60px}
+    .banned-note{background:#2a1010;border:1px solid #f44;border-radius:6px;padding:10px;font-size:.78rem;color:#f88;margin-bottom:14px;display:none}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="brand" href="home.html">ROLOX</a>
+  <a href="home.html">Início</a>
+  <a href="login.html">Login</a>
+  <a href="register.html">Criar Conta</a>
+</nav>
+<div class="wrap">
+<div class="card">
+  <h1>ROLOX</h1>
+  <p class="sub">Criar nova conta</p>
+
+  <div class="banned-note" id="bannedNote">
+    ⚠️ Este nome de convidado está banido do Rolox.
+  </div>
+
+  <div class="field">
+    <label>Nome de usuário</label>
+    <input id="txtUser" placeholder="Ex: MeuUsuario123" oninput="checkUsername()"/>
+    <div class="status" id="stUser"></div>
+  </div>
+
+  <div class="field">
+    <label>Senha (8 a 200 caracteres)</label>
+    <input id="txtPass" type="password" placeholder="Mínimo 8 caracteres" oninput="checkPass()"/>
+    <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+  </div>
+
+  <div class="field">
+    <label>Confirmar senha</label>
+    <input id="txtConf" type="password" placeholder="Repita a senha" oninput="checkPass()"/>
+  </div>
+
+  <div class="status" id="stForm"></div>
+
+  <button class="btn btn-blue" id="btnReg" disabled onclick="doRegister()">Criar Conta no Roblox</button>
+  <div class="sep">─────────── ou ───────────</div>
+  <button class="btn btn-gray" onclick="enterGuest()">Entrar como Convidado (Guest)</button>
+  <br/>
+  <a class="link" href="login.html">Já tem conta? Fazer login</a>
+</div>
+</div>
+<script>
+  const BANNED = ["guest_67","guest_42","guest_666","rolox_dono","0p_409"];
+  let userOk = false, passOk = false;
+
+  async function checkUsername() {
+    const u  = document.getElementById("txtUser").value.trim();
+    const st = document.getElementById("stUser");
+    const bn = document.getElementById("bannedNote");
+    userOk = false; bn.style.display = "none";
+    if (u.length < 3) { st.textContent = ""; validate(); return; }
+
+    if (BANNED.includes(u.toLowerCase())) {
+      bn.style.display = "block";
+      st.className = "status err"; st.textContent = `❌ '${u}' está banido do Rolox.`;
+      validate(); return;
+    }
+
+    st.className = "status info"; st.textContent = "Verificando...";
+    try {
+      const r = await fetch("https://users.roblox.com/v1/usernames/users", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({usernames:[u],excludeBannedUsers:false})
+      });
+      const j = await r.json();
+      if (j.data && j.data.length > 0) {
+        st.className = "status err"; st.textContent = `❌ '${u}' já está em uso no Roblox/rolox.`;
+      } else {
+        st.className = "status ok"; st.textContent = `✅ '${u}' está disponível!`;
+        userOk = true;
+      }
+    } catch { st.className="status info"; st.textContent="Não foi possível verificar."; userOk=true; }
+    validate();
+  }
+
+  function checkPass() {
+    const p = document.getElementById("txtPass").value;
+    const c = document.getElementById("txtConf").value;
+    const f = document.getElementById("strengthFill");
+    const st = document.getElementById("stForm");
+    passOk = false;
+
+    let str = 0;
+    if (p.length >= 8)  str += 25;
+    if (p.length >= 12) str += 25;
+    if (/[A-Z]/.test(p)) str += 25;
+    if (/[0-9!@#$%^&*]/.test(p)) str += 25;
+    f.style.width = str + "%";
+    f.style.background = str < 50 ? "#f44" : str < 75 ? "#ff9800" : "#4caf50";
+
+    if (p.length > 0 && p.length < 8)  { st.className="status err"; st.textContent="Senha muito curta (mínimo 8)."; validate(); return; }
+    if (p.length > 200) { st.className="status err"; st.textContent="Senha muito longa (máximo 200)."; validate(); return; }
+    if (c.length > 0 && p !== c) { st.className="status err"; st.textContent="As senhas não coincidem."; validate(); return; }
+    if (p.length >= 8 && p === c) { passOk = true; st.textContent = ""; }
+    validate();
+  }
+
+  function validate() {
+    document.getElementById("btnReg").disabled = !(userOk && passOk);
+  }
+
+  function doRegister() {
+    const u = document.getElementById("txtUser").value.trim();
+    window.open(`https://www.roblox.com/account/signupredir?username=${encodeURIComponent(u)}`, "_blank");
+    document.getElementById("btnReg").textContent = "✅ Já criei minha conta — Fazer Login";
+    document.getElementById("btnReg").onclick = () => location.href = "login.html";
+  }
+
+  function enterGuest() {
+    const banned = ["guest_67","guest_42","guest_666"];
+    let g;
+    do { g = "Guest_" + Math.floor(Math.random()*9000+1000); }
+    while (banned.includes(g.toLowerCase()));
+    localStorage.setItem("rolox_username", g);
+    localStorage.setItem("rolox_displayname", g);
+    localStorage.setItem("rolox_id", -Math.floor(Math.random()*9000+1000));
+    location.href = "home.html";
+  }
+</script>
+</body>
+</html>

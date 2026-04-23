@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Rolox - Login</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#111;color:#fff;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .card{background:#1a1a1a;border-radius:12px;padding:40px;max-width:460px;width:90%;text-align:center}
+    .logo-box{width:100px;height:100px;background:#00a2ff;border-radius:8px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:bold;color:#fff}
+    h1{font-size:2rem;margin-bottom:4px}
+    .sub{color:#555;font-size:.78rem;margin-bottom:24px}
+    .info{color:#aaa;font-size:.88rem;margin-bottom:16px}
+    .status{min-height:22px;font-size:.85rem;margin-bottom:10px;color:#f44}
+    .status.ok{color:#4caf50}
+    .status.info{color:#64b5f6}
+    input{width:100%;padding:12px;background:#262626;border:1px solid #333;border-radius:6px;color:#fff;font-size:1rem;margin-bottom:12px;outline:none}
+    input:focus{border-color:#00a2ff}
+    .btn{width:100%;padding:14px;border-radius:8px;font-size:1rem;font-weight:bold;cursor:pointer;border:none;margin-bottom:10px}
+    .btn-blue{background:#00a2ff;color:#fff}
+    .btn-blue:hover{background:#0090e0}
+    .btn-blue:disabled{background:#1a4a6a;cursor:not-allowed}
+    .btn-gray{background:#252525;color:#aaa;border:1px solid #333}
+    .btn-gray:hover{background:#2e2e2e}
+    .link{color:#00a2ff;font-size:.85rem;cursor:pointer;text-decoration:none}
+    .link:hover{text-decoration:underline}
+    .sep{color:#444;font-size:.8rem;margin:8px 0}
+    nav{background:#0d0d0d;padding:12px 24px;display:flex;gap:20px;align-items:center;position:fixed;top:0;left:0;right:0;z-index:99}
+    nav .brand{color:#00a2ff;font-weight:bold;font-size:1.2rem;text-decoration:none}
+    nav a{color:#888;font-size:.9rem;text-decoration:none}
+    nav a:hover{color:#fff}
+    .wrap{margin-top:60px}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="brand" href="home.html">ROLOX</a>
+  <a href="home.html">Início</a>
+  <a href="login.html">Login</a>
+  <a href="register.html">Criar Conta</a>
+</nav>
+<div class="wrap">
+<div class="card">
+  <div class="logo-box">R</div>
+  <h1>ROLOX</h1>
+  <p class="sub">Criador Principal: Roblox Official &nbsp;|&nbsp; Publicador: One Mapas Official</p>
+  <p class="info">Clique em "Login no Roblox" para entrar com sua conta Roblox.</p>
+  <div class="status" id="status"></div>
+  <button class="btn btn-blue" id="btnLogin" onclick="doLogin()">Login no Roblox</button>
+  <div class="sep">─────────── ou ───────────</div>
+  <button class="btn btn-gray" onclick="location.href='register.html'">Criar nova conta</button>
+  <br/>
+  <a class="link" href="register.html">Não tem conta? Registre-se</a>
+</div>
+</div>
+<script>
+  async function doLogin() {
+    const btn = document.getElementById("btnLogin");
+    const st  = document.getElementById("status");
+    btn.disabled = true;
+    st.className = "status info";
+    st.textContent = "Digite seu username do Roblox:";
+
+    const username = prompt("Username do Roblox:");
+    if (!username) { btn.disabled = false; st.textContent = ""; return; }
+
+    st.textContent = "Verificando conta...";
+    try {
+      const r = await fetch("https://users.roblox.com/v1/usernames/users", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({usernames:[username],excludeBannedUsers:false})
+      });
+      const j = await r.json();
+      if (!j.data || j.data.length === 0) {
+        st.className = "status"; st.textContent = "Usuário não encontrado.";
+        btn.disabled = false; return;
+      }
+      const user = j.data[0];
+      localStorage.setItem("rolox_username", user.name);
+      localStorage.setItem("rolox_displayname", user.displayName || user.name);
+      localStorage.setItem("rolox_id", user.id);
+      st.className = "status ok"; st.textContent = `✅ Bem-vindo, ${user.displayName || user.name}!`;
+      setTimeout(() => location.href = "home.html", 1000);
+    } catch(e) {
+      st.className = "status"; st.textContent = "Erro ao conectar. Tente novamente.";
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
